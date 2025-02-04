@@ -175,3 +175,4 @@ dist
 .DS_Store
 
 main*.exe
+/config.json

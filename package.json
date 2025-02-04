@@ -2,10 +2,19 @@
   "name": "new-bin-okx-1",
   "module": "main.ts",
   "type": "module",
+  "scripts": {
+    "start": "bun run main.ts",
+    "dev": "bun run --watch main.ts",
+    "build:linux": "bun build --compile --target=bun-linux-x64-baseline --minify --sourcemap --bytecode main.ts --outfile myapp",
+    "build:windows": "bun build --compile --target=bun-windows-x64-baseline --minify --sourcemap --bytecode main.ts --outfile myapp"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "ccxt": "^4.4.53"
   }
 }
