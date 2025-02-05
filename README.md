@@ -21,18 +21,18 @@
 
 ```ts
 interface Config {
-	apiKey: string;
-	secret: string;
-	password: string;
-	proxy: string;
-	isKLineLoss: boolean;
-	kLineCount: number; // K线数量
-	kLinePeriod: string; // K线周期
-	deviation: number; // 偏离百分比 默认 0.2%
-	reverse: boolean; // 是否反向 默认 true
-	floatLoss: number; // 浮动止损阈值 默认 15%
-	isFloatLoss: boolean; // 浮动止损阈值开关 默认 true
-	positionBalance: number; // 超余额阈值 默认 10%
-	isPositionBalance: boolean; // 超余额阈值 默认 true
+ apiKey: string;
+ secret: string;
+ password: string;
+ proxy: string;
+ isKLineLoss: boolean; // 是否开启止损
+ kLineCount: number; // K线数量
+ kLinePeriod: string; // K线周期
+ deviation: number; // 偏离百分比 默认 0.2%
+ reverse: boolean; // 是否反向 默认 true
+ floatLoss: number; // 浮动止损阈值 默认 15%
+ isFloatLoss: boolean; // 浮动止损阈值开关 默认 true
+ positionBalance: number; // 超余额阈值 默认 10%
+ isPositionBalance: boolean; // 超余额阈值 默认 true
 }
 ```
