@@ -1,6 +1,6 @@
 // import WebSocket from "./node_modules/ccxt/js/src/base/ws/WsClient.js";
-// bun build --compile --target=bun-windows-x64-baseline --minify --sourcemap --bytecode main.ts --outfile myapp
-// bun build --compile --target=bun-linux-x64-baseline --minify --sourcemap --bytecode main.ts --outfile myapp
+// bun build --compile --target=bun-windows-x64-baseline --minify --sourcemap --bytecode main.ts --outfile main
+// bun build --compile --target=bun-linux-x64-baseline --minify --sourcemap --bytecode main.ts --outfile main
 import ccxt from "ccxt";
 import config from "./config.ts";
 
@@ -73,7 +73,7 @@ while (true) {
                   // 超出
                   const exceed = order.cost - balance?.USDT?.total / config.positionBalance;
                   console.log(
-                    `开单数量：${order.cost} 账户余额：${balance?.USDT?.total} 超标金额: ${
+                    `开单金额：${order.cost} 账户余额：${balance?.USDT?.total} 超标金额: ${
                       order.cost - balance?.USDT?.total / config.positionBalance
                     }`
                   );
@@ -93,7 +93,7 @@ while (true) {
                       console.log(e);
                     });
                 }
-                console.log(`监听${order.side == "sell" ? "空" : "多"}单: ${order.symbol} 止损：${cost}`);
+                console.log(`挂载${order.side == "sell" ? "空" : "多"}单: ${order.symbol} 止损：${cost}`);
                 let createOrder = await okxClient.createOrder(
                   order.symbol,
                   "limit",
@@ -117,9 +117,9 @@ while (true) {
                   .cancelOrders(ordersIds[order.symbol], order.symbol, {
                     trigger: true
                   })
-                  .catch((e) => {
-                    console.log("订单已取消");
-                  });
+                  .catch((e) => {})
+                  .then(() => {});
+                console.log("清理不必要订单");
                 ordersIds[order.symbol] = [];
               }
             }
