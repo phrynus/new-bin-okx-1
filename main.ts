@@ -52,7 +52,7 @@ while (true) {
                 order.amount,
                 undefined
               );
-              console.log(`反手${order.side == "sell" ? "空" : "多"}单:${order.symbol} 成本:${order.cost}`);
+              console.log(`反手${order.side == "sell" ? "空" : "多"}单：${order.symbol} 成本:${order.cost}`);
               if (!ordersIds[order.symbol]) {
                 ordersIds[order.symbol] = [];
               }
@@ -63,7 +63,7 @@ while (true) {
               if (config.isKLineLoss) {
                 const { lows, highs } = await getRecentKLineData(order.symbol, config.kLineCount);
                 if (!lows || !highs) throw "K线获取失败 网络不稳定";
-                console.log(`当前K线低点：${lows} 高点：${highs}`);
+                // console.log(`当前K线低点：${lows} 高点：${highs}`);
                 // 取账号余额
                 const balance = await okxClient.fetchBalance(); // 获取账户余额
                 const bf = Number(config.deviation) / 100;
@@ -93,7 +93,7 @@ while (true) {
                       console.log(e);
                     });
                 }
-                console.log(`挂载${order.side == "sell" ? "空" : "多"}单: ${order.symbol} 止损：${cost}`);
+                console.log(`挂载${order.side == "sell" ? "空" : "多"}单：${order.symbol} 止损：${cost}`);
                 let createOrder = await okxClient.createOrder(
                   order.symbol,
                   "limit",
