@@ -32,10 +32,10 @@ const defaultConfig: Config = {
   positionBalance: 10,
   isPositionBalance: true,
 };
-
 const configFle = Bun.file('config.json', {
   type: 'application/json',
 });
+
 const exists = await configFle.exists();
 let config: Config = defaultConfig;
 if (!exists) {
@@ -57,4 +57,5 @@ if (!exists) {
     }
   }
 }
+
 export default config;
