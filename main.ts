@@ -110,27 +110,28 @@ if (config.isFloatLoss) {
             ) {
               const exceed = trade.notional - total / config.positionBalance;
               let amount = exceed / (trade.notional / trade.contracts);
-              console.log(
-                `开单金额：${trade.notional} 账户余额：${total} 超标金额: ${exceed}`,
-                trade.notional,
-                trade.contracts,
-                amount
-              );
+              // console.log(
+              //   `开单金额：${trade.notional} 账户余额：${total} 超标金额: ${exceed}`,
+              //   trade.notional,
+              //   trade.contracts,
+              //   amount
+              // );
 
-              await okxClient
-                .createOrder(
-                  trade.symbol,
-                  "market",
-                  trade.side == "long" ? "sell" : "buy",
-                  Number(numDecimalLength(trade.notional, amount)),
-                  undefined,
-                  {
-                    reduceOnly: true
-                  }
-                )
-                .catch((e) => {
-                  console.log(e);
-                });
+              try {
+                await okxClient
+                  .createOrder(
+                    trade.symbol,
+                    "market",
+                    trade.side == "long" ? "sell" : "buy",
+                    Number(numDecimalLength(trade.notional, amount)),
+                    undefined,
+                    {
+                      reduceOnly: true
+                    }
+                  )
+                  .catch(() => {})
+                  .then(() => {});
+              } catch (e) {}
             }
           } catch (e) {
             console.log(e);
