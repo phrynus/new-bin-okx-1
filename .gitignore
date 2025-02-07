@@ -176,3 +176,7 @@ dist
 
 main*.exe
 /config.json
+/main_linux
+/new-bin-okx-1.zip
+/源码.zip
+/程序.zip

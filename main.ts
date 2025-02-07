@@ -4,6 +4,7 @@
 import ccxt from 'ccxt';
 import config from './config.ts';
 
+console.log(config);
 const okxClient = new ccxt.pro.okx({
   apiKey: config.apiKey,
   secret: config.secret,
@@ -24,7 +25,6 @@ const ping = async () => {
     return false;
   }
 };
-
 while (true) {
   if (await ping()) {
     break;
@@ -36,8 +36,9 @@ const getRecentKLineData = async (symbol: string, limit: number = 3) => {
       symbol,
       config.kLinePeriod,
       undefined,
-      limit
+      limit + 1
     );
+    delete klines[limit];
     const lows = klines.map((k) => k[3]).sort((a: any, b: any) => a - b)[0];
     const highs = klines.map((k) => k[2]).sort((a: any, b: any) => b - a)[0];
     return { lows, highs };
@@ -51,7 +52,6 @@ const numDecimalLength = (num1: number, num2: number) => {
   // 根据小数位数调整第二个参数的精度
   return num2.toFixed(decimalLength);
 };
-
 const ordersIds: any = {};
 if (config.isFloatLoss) {
   (async () => {
@@ -61,34 +61,21 @@ if (config.isFloatLoss) {
         for (const trade of MyTrades) {
           if (trade.unrealizedPnl == undefined) continue;
           const balance: any = await okxClient.fetchBalance(); // 获取账户余额
-          let total = balance?.USDT?.total | 0;
-          let loss = total * (config.floatLoss / 100);
-          // console.log(
-          //   `${trade.symbol} - 当前损益：${trade.unrealizedPnl} 阈值：${-loss} `
-          // );
-
+          let total = Number(balance?.USDT?.total);
+          if (!total) {
+            console.log('获取账户余额失败');
+            continue;
+          }
+          let loss = (Number(config.floatLoss) / 100) * total;
           if (-loss > trade.unrealizedPnl) {
             console.log(
               `浮亏超过账户余额的${config.floatLoss}%，平掉该订单：${trade.symbol}`
             );
             await okxClient.setLeverage(trade.leverage, trade.symbol);
-            if (trade.contracts != null) {
-              await okxClient
-                .createOrder(
-                  trade.symbol,
-                  'market',
-                  trade.side == 'long' ? 'sell' : 'buy',
-                  trade.contracts,
-                  undefined,
-                  {
-                    reduceOnly: true,
-                  }
-                )
-                .catch((e) => {
-                  console.log(e, trade.contracts);
-                });
-            }
+            await okxClient.closePosition(trade.symbol);
           }
+          // 延迟1s
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (e) {
         console.log(e);
@@ -151,7 +138,10 @@ while (true) {
                 const cost =
                   order.side == 'sell' ? highs * (1 + bf) : lows * (1 - bf);
                 await okxClient.setLeverage(order.info.lever, order.symbol);
-                let total = balance?.USDT?.total | 0;
+                let total = Number(balance?.USDT?.total);
+                if (!total) {
+                  throw '获取账户余额失败';
+                }
                 if (
                   order.cost > total * (config.floatLoss / 100) &&
                   config.isPositionBalance

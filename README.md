@@ -24,7 +24,7 @@ interface Config {
  apiKey: string;
  secret: string;
  password: string;
- proxy: string;
+ proxy: string; // 代理
  isKLineLoss: boolean; // 是否开启止损
  kLineCount: number; // K线数量
  kLinePeriod: string; // K线周期
@@ -36,3 +36,24 @@ interface Config {
  isPositionBalance: boolean; // 超余额阈值 默认 true
 }
 ```
+案例
+
+```json
+{
+  "apiKey": "YOU ApiKey",
+  "secret": "YOU Secret",
+  "password": "YOU Password",
+  "proxy": "http://127.0.0.1:7890",
+  "isKLineLoss": true,
+  "kLineCount": 3,
+  "kLinePeriod": "30m",
+  "deviation": 0.2,
+  "reverse": true,
+  "floatLoss": 15,
+  "isFloatLoss": true,
+  "positionBalance": 10,
+  "isPositionBalance": true
+}
+```
+
+如果平仓失败检查是否为 `逐仓` 切换到 `全仓` 就行了
