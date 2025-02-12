@@ -22,16 +22,25 @@ const defaultConfig: Config = {
   secret: 'YOU Secret',
   password: 'YOU Password',
   proxy: '',
-  isKLineLoss: true,
+  isKLineLoss: false,
   kLineCount: 3,
   kLinePeriod: '30m',
   deviation: 0.2,
-  reverse: true,
+  reverse: false,
   floatLoss: 15,
-  isFloatLoss: true,
+  isFloatLoss: false,
   positionBalance: 10,
-  isPositionBalance: true,
+  isPositionBalance: false,
 };
+// 默认配置不存在的参数
+const defaultConfigNo = [
+  'isKLineLoss',
+  'kLineCount',
+  'kLinePeriod',
+  'deviation',
+  'reverse',
+  'proxy',
+];
 const configFle = Bun.file('config.json', {
   type: 'application/json',
 });
@@ -52,8 +61,12 @@ if (!exists) {
       typeof value !== typeof defaultConfig[key as keyof Config] ||
       !(key in config)
     ) {
-      if (key === 'proxy') continue;
-      throw `请检测 配置文件参数 ${key}，应该是: ${defaultConfig[key as keyof Config]}`;
+      // 判断 key 是否在 defaultConfigNo 中
+      if (defaultConfigNo.includes(key)) {
+        config[key] = defaultConfig[key as keyof Config];
+      } else {
+        throw `请检测 配置文件参数 ${key}`;
+      }
     }
   }
 }

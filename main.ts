@@ -1,14 +1,13 @@
 // import WebSocket from "./node_modules/ccxt/js/src/base/ws/WsClient.js";
 // bun build --compile --target=bun-windows-x64-baseline --minify --sourcemap main.ts --outfile main
 // bun build --compile --target=bun-linux-x64-baseline --minify --sourcemap main.ts --outfile main
-import ccxt from "ccxt";
-import config from "./config.ts";
+import ccxt from 'ccxt';
+import config from './config.ts';
 
-console.log(config);
 const okxClient = new ccxt.pro.okx({
   apiKey: config.apiKey,
   secret: config.secret,
-  password: config.password
+  password: config.password,
 });
 okxClient.httpProxy = config.proxy;
 okxClient.wssProxy = config.proxy;
@@ -21,7 +20,7 @@ const ping = async () => {
     );
     return true;
   } catch (error) {
-    console.log("网络错误");
+    console.log('网络错误');
     return false;
   }
 };
@@ -32,7 +31,12 @@ while (true) {
 }
 const getRecentKLineData = async (symbol: string, limit: number = 3) => {
   try {
-    const klines = await okxClient.fetchOHLCV(symbol, config.kLinePeriod, undefined, limit + 1);
+    const klines = await okxClient.fetchOHLCV(
+      symbol,
+      config.kLinePeriod,
+      undefined,
+      limit + 1
+    );
     delete klines[limit];
     const lows = klines.map((k) => k[3]).sort((a: any, b: any) => a - b)[0];
     const highs = klines.map((k) => k[2]).sort((a: any, b: any) => b - a)[0];
@@ -43,11 +47,11 @@ const getRecentKLineData = async (symbol: string, limit: number = 3) => {
   }
 };
 const numDecimalLength = (num1: number, num2: number) => {
-  const decimalLength = (num1.toString().split(".")[1] || "").length;
+  const decimalLength = (num1.toString().split('.')[1] || '').length;
   // 根据小数位数调整第二个参数的精度
   return num2.toFixed(decimalLength);
 };
-const ordersIds: any = {};
+const errorSymbol = [];
 if (config.isFloatLoss) {
   (async () => {
     while (true) {
@@ -59,41 +63,57 @@ if (config.isFloatLoss) {
             const balance: any = await okxClient.fetchBalance(); // 获取账户余额
             let total = Number(balance?.USDT?.total);
             if (!total) {
-              console.log("获取账户余额失败");
+              console.log('获取账户余额失败');
               continue;
             }
-            const { lows, highs } = await getRecentKLineData(trade.symbol, config.kLineCount);
-            if (!lows || !highs) {
-              console.log("获取K线数据失败");
-              continue;
-            }
-            console.log(
-              `\n${trade.symbol}:${trade.side} \n账户余额：${total} \n当前价格：${trade.markPrice} \n高低价格：${highs} - ${lows} \n盈亏：${trade.unrealizedPnl}`
+            const { lows, highs } = await getRecentKLineData(
+              trade.symbol,
+              config.kLineCount
             );
+            if (!lows || !highs) {
+              console.log('获取K线数据失败');
+              continue;
+            }
+
             // 浮亏超过账户余额止损
             await okxClient.setLeverage(trade.leverage, trade.symbol);
             let loss = (Number(config.floatLoss) / 100) * total;
-            if (-loss > trade.unrealizedPnl) {
-              console.log(`浮亏超过账户余额的${config.floatLoss}%，平掉该订单：${trade.symbol}`);
+            console.log(
+              `\n${trade.symbol}:${trade.side} \n账户余额：${total} \n盈亏：${trade.unrealizedPnl} \n风控：${-loss}`
+            );
+            if (config.isKLineLoss) {
+              console.log(
+                `价格：${trade.markPrice}\n 高低：${highs} - ${lows}`
+              );
+            }
+
+            if (-loss > trade.unrealizedPnl && config.isFloatLoss) {
+              console.log(
+                `浮亏超过账户余额的${config.floatLoss}%，平掉该订单：${trade.symbol}`
+              );
               await okxClient.closePosition(trade.symbol);
             }
+
             // 高低点止损
             if (config.isKLineLoss) {
               const bf = Number(config.deviation) / 100;
               if (
-                config.reverse &&
                 trade.markPrice &&
-                ((trade.side == "long" && trade.markPrice < lows * (1 - bf)) ||
-                  (trade.side == "short" && trade.markPrice > highs * (1 + bf)))
+                ((trade.side == 'long' && trade.markPrice < lows * (1 - bf)) ||
+                  (trade.side == 'short' && trade.markPrice > highs * (1 + bf)))
               ) {
-                await okxClient.closePosition(trade.symbol);
                 console.log(`${trade.symbol} 止损`);
-                if (config.reverse && trade.contracts && trade.unrealizedPnl < 0) {
+                await okxClient.closePosition(trade.symbol);
+                if (
+                  config.reverse &&
+                  trade.contracts &&
+                  trade.unrealizedPnl < 0
+                ) {
                   console.log(`${trade.symbol} 翻转`);
                   await okxClient.createOrder(
                     trade.symbol,
-                    "market",
-                    trade.side == "long" ? "sell" : "buy",
+                    'market',
+                    trade.side == 'long' ? 'sell' : 'buy',
                     trade.contracts,
                     undefined
                   );
@@ -102,40 +122,46 @@ if (config.isFloatLoss) {
               // 翻转
             }
             // 超余额阈值
-            if (
-              trade.contracts &&
-              trade.notional &&
-              trade.notional > total * (config.floatLoss / 100) &&
-              config.isPositionBalance
-            ) {
-              const exceed = trade.notional - total / config.positionBalance;
-              let amount = exceed / (trade.notional / trade.contracts);
-              // console.log(
-              //   `开单金额：${trade.notional} 账户余额：${total} 超标金额: ${exceed}`,
-              //   trade.notional,
-              //   trade.contracts,
-              //   amount
-              // );
-
-              try {
-                await okxClient
-                  .createOrder(
-                    trade.symbol,
-                    "market",
-                    trade.side == "long" ? "sell" : "buy",
-                    Number(numDecimalLength(trade.notional, amount)),
-                    undefined,
-                    {
-                      reduceOnly: true
-                    }
-                  )
-                  .catch(() => {})
-                  .then(() => {});
-              } catch (e) {}
+            if (trade.contracts && trade.notional && config.isPositionBalance) {
+              const maxAllowedPosition = total * (config.positionBalance / 100);
+              // 如果当前持仓超出了最大允许仓位，则需要平仓
+              if (trade.notional > maxAllowedPosition) {
+                const exceed = trade.notional - maxAllowedPosition;
+                let amount = exceed / (trade.notional / trade.contracts);
+                amount = Number(numDecimalLength(trade.notional, amount));
+                try {
+                  // 判断errorSymbol数组里面是否有一样的订单号
+                  if (!errorSymbol.includes(trade.id)) {
+                    console.log(
+                      `${trade.symbol} 超出最大允许仓位\n当前仓位：${trade.notional}\n最大允许：${maxAllowedPosition}`
+                    );
+                    await okxClient
+                      .createOrder(
+                        trade.symbol,
+                        'market',
+                        trade.side == 'long' ? 'sell' : 'buy',
+                        amount,
+                        undefined,
+                        {
+                          reduceOnly: true,
+                        }
+                      )
+                      .catch((e) => {
+                        console.log(`平仓失败：${e}`);
+                        errorSymbol.push(trade.id);
+                      })
+                      .then(() => {
+                        console.log(
+                          `平仓成功：${trade.symbol}`,
+                          '可能会再弹出一次平仓失败,不必理会'
+                        );
+                      });
+                  }
+                } catch (e) {}
+              }
             }
           } catch (e) {
             console.log(e);
-            continue;
           }
         }
         // 延迟1s

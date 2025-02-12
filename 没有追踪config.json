@@ -1,0 +1,10 @@
+{
+  "apiKey": "",
+  "secret": "",
+  "password": ".",
+  "proxy": "",
+  "floatLoss": 15,
+  "isFloatLoss": true,
+  "positionBalance": 20,
+  "isPositionBalance": true
+}
