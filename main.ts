@@ -51,7 +51,7 @@ const numDecimalLength = (num1: number, num2: number) => {
   // 根据小数位数调整第二个参数的精度
   return num2.toFixed(decimalLength);
 };
-const errorSymbol = [];
+let errorSymbol: any[] = [];
 if (config.isFloatLoss) {
   (async () => {
     while (true) {
@@ -132,9 +132,9 @@ if (config.isFloatLoss) {
                 try {
                   // 判断errorSymbol数组里面是否有一样的订单号
                   if (!errorSymbol.includes(trade.id)) {
-                    console.log(
-                      `${trade.symbol} 超出最大允许仓位\n当前仓位：${trade.notional}\n最大允许：${maxAllowedPosition}`
-                    );
+                    // console.log(
+                    //   `${trade.symbol} 超出最大允许仓位\n当前仓位：${trade.notional}\n最大允许：${maxAllowedPosition}`
+                    // );
                     await okxClient
                       .createOrder(
                         trade.symbol,
@@ -147,14 +147,18 @@ if (config.isFloatLoss) {
                         }
                       )
                       .catch((e) => {
-                        console.log(`平仓失败：${e}`);
-                        errorSymbol.push(trade.id);
+                        // console.log(`平仓失败：${e}`);
+                        // errorSymbol.push(trade.id);
                       })
                       .then(() => {
-                        console.log(
-                          `平仓成功：${trade.symbol}`,
-                          '可能会再弹出一次平仓失败,不必理会'
-                        );
+                        // console.log(
+                        //   `平仓成功：${trade.symbol}`,
+                        //   '可能会再弹出一次平仓失败,不必理会'
+                        // );
+                        // // 删除 errorSymbol数组里面一样的订单号
+                        // errorSymbol = errorSymbol.filter((item) => {
+                        //   return item != trade.id;
+                        // })
                       });
                   }
                 } catch (e) {}
